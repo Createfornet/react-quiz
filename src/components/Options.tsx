@@ -7,7 +7,7 @@ interface Props {
 }
 
 function Options({ question, onAnswer, answer }: Props) {
-  const hasAnswer = Boolean(answer);
+  const hasAnswer = typeof answer === 'number';
 
   return (
     <div className='options'>
@@ -15,7 +15,7 @@ function Options({ question, onAnswer, answer }: Props) {
         <button
           className={`btn btn-option ${i === answer ? 'answer' : ''} ${
             hasAnswer
-              ? i === question.correctOption && answer
+              ? i === question.correctOption
                 ? 'correct'
                 : 'wrong'
               : ''

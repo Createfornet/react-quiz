@@ -7,6 +7,7 @@ import StartScreen from './StartScreen';
 import Question from './Question';
 import { Question as QuestionInterface } from './../interface';
 import NextButton from './NextButton';
+import Progress from './Progress';
 
 interface State {
   questions: QuestionInterface[];
@@ -71,7 +72,12 @@ function App() {
     reducer,
     initialState
   );
+
   const numQuestions = questions.length;
+  const maxPossiblePoints = questions.reduce(
+    (sum, question) => sum + question.points,
+    0
+  );
 
   useEffect(function () {
     fetch('http://localhost:8000/questions')
@@ -108,6 +114,13 @@ function App() {
         )}
         {status === 'active' && (
           <>
+            <Progress
+              index={index}
+              numQuestions={numQuestions}
+              points={points}
+              maxPossiblePoints={maxPossiblePoints}
+              answer={answer}
+            />
             <Question
               question={questions[index]}
               onAnswer={handleSelectAnswer}
