@@ -8,6 +8,9 @@ import Question from './Question';
 import { Question as QuestionInterface } from './../interface';
 import NextButton from './NextButton';
 import Progress from './Progress';
+import FinishScreen from './FinishScreen';
+import Timer from './Timer';
+import Footer from './Footer';
 
 interface State {
   questions: QuestionInterface[];
@@ -15,6 +18,8 @@ interface State {
   index: number;
   answer: null | number;
   points: number;
+  highscore: number;
+  secondsRemaining: number;
 }
 
 interface Action {
@@ -23,9 +28,14 @@ interface Action {
     | 'dataFailed'
     | 'start'
     | 'selectAnswer'
-    | 'nextQuestion';
+    | 'nextQuestion'
+    | 'finish'
+    | 'restart'
+    | 'tick';
   payload?: QuestionInterface[] | number;
 }
+
+const SECS_PER_QUESTION = 20;
 
 const initialState: State = {
   questions: [],
@@ -33,6 +43,8 @@ const initialState: State = {
   index: 0,
   answer: null,
   points: 0,
+  highscore: 0,
+  secondsRemaining: 0,
 };
 
 function reducer(state: State, action: Action): State {
@@ -50,7 +62,11 @@ function reducer(state: State, action: Action): State {
       return { ...state, status: 'error' };
 
     case 'start':
-      return { ...state, status: 'active' };
+      return {
+        ...state,
+        status: 'active',
+        secondsRemaining: state.questions.length * SECS_PER_QUESTION,
+      };
 
     case 'selectAnswer':
       return {
@@ -64,14 +80,37 @@ function reducer(state: State, action: Action): State {
 
     case 'nextQuestion':
       return { ...state, index: state.index + 1, answer: null };
+
+    case 'finish':
+      return {
+        ...state,
+        status: 'finished',
+        highscore:
+          state.highscore < state.points ? state.points : state.highscore,
+      };
+
+    case 'restart':
+      return {
+        ...initialState,
+        status: 'ready',
+        highscore: state.highscore,
+        questions: state.questions,
+      };
+
+    case 'tick':
+      return {
+        ...state,
+        secondsRemaining: state.secondsRemaining - 1,
+        status: state.secondsRemaining <= 0 ? 'finished' : state.status,
+      };
   }
 }
 
 function App() {
-  const [{ questions, status, index, answer, points }, dispatch] = useReducer(
-    reducer,
-    initialState
-  );
+  const [
+    { questions, status, index, answer, points, highscore, secondsRemaining },
+    dispatch,
+  ] = useReducer(reducer, initialState);
 
   const numQuestions = questions.length;
   const maxPossiblePoints = questions.reduce(
@@ -93,11 +132,24 @@ function App() {
   }
 
   function handleSelectAnswer(i: number) {
-    dispatch({ type: 'selectAnswer', payload: i });
+    if (index + 1 >= maxPossiblePoints) dispatch({ type: 'finish' });
+    else dispatch({ type: 'selectAnswer', payload: i });
   }
 
   function handleNextQuestion() {
     dispatch({ type: 'nextQuestion' });
+  }
+
+  function handleFinishQuestion() {
+    dispatch({ type: 'finish' });
+  }
+
+  function handleRestart() {
+    dispatch({ type: 'restart' });
+  }
+
+  function handleTick() {
+    dispatch({ type: 'tick' });
   }
 
   return (
@@ -108,10 +160,13 @@ function App() {
 
       <Main>
         {status === 'loading' && <Loader />}
+
         {status === 'error' && <Error />}
+
         {status === 'ready' && (
           <StartScreen numQuestions={numQuestions} onStart={handleStartQuiz} />
         )}
+
         {status === 'active' && (
           <>
             <Progress
@@ -126,8 +181,26 @@ function App() {
               onAnswer={handleSelectAnswer}
               answer={answer}
             />
-            <NextButton onNextQuestion={handleNextQuestion} answer={answer} />
+            <Footer>
+              <Timer onTick={handleTick} secondsRemaining={secondsRemaining} />
+              <NextButton
+                onNextQuestion={handleNextQuestion}
+                onFinish={handleFinishQuestion}
+                answer={answer}
+                index={index}
+                numQuestions={numQuestions}
+              />
+            </Footer>
           </>
+        )}
+
+        {status === 'finished' && (
+          <FinishScreen
+            points={points}
+            maxPossiblePoints={maxPossiblePoints}
+            onRestart={handleRestart}
+            highscore={highscore}
+          />
         )}
       </Main>
     </div>
