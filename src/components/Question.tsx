@@ -1,17 +1,23 @@
-import { Question as QuestionInterface } from '../interface';
+import { useQuiz } from './contexts/QuizContext';
 import Options from './Options';
 
-interface Props {
-  question: QuestionInterface;
-  onAnswer: (n: number) => void;
-  answer: number | null;
-}
+function Question() {
+  const { index, answer, questions, dispatch, maxPossiblePoints } = useQuiz();
+  const question = questions[index];
 
-function Question({ question, onAnswer, answer }: Props) {
+  function handleSelectAnswer(i: number) {
+    if (index + 1 >= maxPossiblePoints) dispatch({ type: 'finish' });
+    else dispatch({ type: 'selectAnswer', payload: i });
+  }
+
   return (
     <div>
       <h4>{question.question}</h4>
-      <Options question={question} onAnswer={onAnswer} answer={answer} />
+      <Options
+        question={question}
+        onAnswer={handleSelectAnswer}
+        answer={answer}
+      />
     </div>
   );
 }

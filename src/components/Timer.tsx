@@ -1,20 +1,25 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
+import { useQuiz } from './contexts/QuizContext';
 
-interface Props {
-  onTick: () => void;
-  secondsRemaining: number;
-}
-
-function Timer({ onTick, secondsRemaining }: Props) {
+function Timer() {
+  const { secondsRemaining, dispatch } = useQuiz();
   const minutes = Math.floor(secondsRemaining / 60);
   const seconds = secondsRemaining % 60;
 
+  const tickTock = useCallback(
+    function () {
+      dispatch({ type: 'tick' });
+      console.log(1);
+    },
+    [dispatch]
+  );
+
   useEffect(
     function () {
-      const id = setInterval(onTick, 1000);
+      const id = setInterval(tickTock, 1000);
       return () => clearInterval(id);
     },
-    [onTick]
+    [tickTock]
   );
 
   return (

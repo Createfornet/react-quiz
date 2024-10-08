@@ -1,30 +1,28 @@
-interface Props {
-  onNextQuestion: () => void;
-  onFinish: () => void;
-  answer: number | null;
-  index: number;
-  numQuestions: number;
-}
+import { useQuiz } from './contexts/QuizContext';
 
-function NextButton({
-  onNextQuestion,
-  onFinish,
-  answer,
-  index,
-  numQuestions,
-}: Props) {
+function NextButton() {
+  const { answer, index, numQuestions, dispatch } = useQuiz();
+
+  function handleNextQuestion() {
+    dispatch({ type: 'nextQuestion' });
+  }
+
+  function handleFinishQuestion() {
+    dispatch({ type: 'finish' });
+  }
+
   if (answer === null) return;
 
   if (index < numQuestions - 1)
     return (
-      <button onClick={() => onNextQuestion()} className='btn btn-ui'>
+      <button onClick={handleNextQuestion} className='btn btn-ui'>
         Next
       </button>
     );
 
   if (index === numQuestions - 1)
     return (
-      <button onClick={() => onFinish()} className='btn btn-ui'>
+      <button onClick={handleFinishQuestion} className='btn btn-ui'>
         Finish
       </button>
     );
